@@ -1,6 +1,10 @@
 {
   "name": "rts-online",
   "private": true,
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "concurrently \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
     "build": "pnpm --filter shared build && pnpm --filter server build && pnpm --filter client build",
