@@ -176,14 +176,15 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const handlePlay = useCallback((name: string, mode: 'singleplayer' | 'multiplayer') => {
+  const handlePlay = useCallback((name: string, mode: 'singleplayer' | 'singleplayer-ffa' | 'multiplayer') => {
     const trimmedName = name.trim() || `Player${Math.floor(Math.random() * 9999)}`;
     setPlayerName(trimmedName);
     
     if (mode === 'multiplayer') {
       setScreen('rooms');
     } else {
-      // Single player — create a game with a bot immediately
+      // Single player — create a game with bot(s) immediately
+      const maxPlayers = mode === 'singleplayer-ffa' ? 4 : 2;
       setIsConnecting(true);
       setErrorMsg('');
       
@@ -193,7 +194,7 @@ const App: React.FC = () => {
           socket.connect();
           const onConnect = () => {
             setIsConnecting(false);
-            socket.emit('createSinglePlayerGame', { playerName: trimmedName });
+            socket.emit('createSinglePlayerGame', { playerName: trimmedName, maxPlayers });
             socket.off('connect', onConnect);
             socket.off('connect_error', onConnectError);
           };
@@ -207,7 +208,7 @@ const App: React.FC = () => {
           socket.once('connect_error', onConnectError);
         } else {
           setIsConnecting(false);
-          socket.emit('createSinglePlayerGame', { playerName: trimmedName });
+          socket.emit('createSinglePlayerGame', { playerName: trimmedName, maxPlayers });
         }
       } catch (error) {
         setIsConnecting(false);

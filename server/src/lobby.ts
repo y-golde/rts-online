@@ -94,7 +94,7 @@ export function registerLobbyEvents(
   });
 
   // ─── Create Room ────────────────────────────────────────────────────
-  socket.on('createRoom', ({ playerName, roomName }) => {
+  socket.on('createRoom', ({ playerName, roomName, maxPlayers: requestedMax }) => {
     // Validate username
     const usernameError = validateUsername(playerName);
     if (usernameError) {
@@ -119,12 +119,15 @@ export function registerLobbyEvents(
       ready: false,
     };
 
+    // Clamp maxPlayers to 2 or 4
+    const maxPlayers = requestedMax === 4 ? 4 : 2;
+
     const room: Room = {
       id: uuid(),
       name: roomName?.trim() || `${sanitizedName}'s Room`,
       hostId: playerId,
       players: [player],
-      maxPlayers: 2,
+      maxPlayers,
       status: 'waiting',
     };
 
@@ -136,7 +139,7 @@ export function registerLobbyEvents(
   });
 
   // ─── Create Single Player Game ──────────────────────────────────────
-  socket.on('createSinglePlayerGame', (data: { playerName: string }) => {
+  socket.on('createSinglePlayerGame', (data: { playerName: string; maxPlayers?: number }) => {
     const { playerName } = data;
     
     // Validate username
@@ -154,6 +157,8 @@ export function registerLobbyEvents(
 
     // Trim and sanitize username
     const sanitizedName = playerName.trim();
+    const maxPlayers = data.maxPlayers === 4 ? 4 : 2;
+    const botCount = maxPlayers - 1;
 
     // Human player
     const humanPlayer: RoomPlayer = {
@@ -161,24 +166,29 @@ export function registerLobbyEvents(
       name: sanitizedName,
       color: PLAYER_COLORS[0],
       faction: 'humans',
-      ready: true, // Auto-ready for single player
-    };
-
-    // Bot player
-    const botPlayer: RoomPlayer = {
-      id: uuid(),
-      name: '[BOT] AI Opponent',
-      color: PLAYER_COLORS[1],
-      faction: 'humans',
       ready: true,
     };
 
+    // Bot players
+    const botNames = ['[BOT] Alpha', '[BOT] Bravo', '[BOT] Charlie'];
+    const bots: RoomPlayer[] = [];
+    for (let i = 0; i < botCount; i++) {
+      bots.push({
+        id: uuid(),
+        name: botNames[i] ?? `[BOT] Bot ${i + 1}`,
+        color: PLAYER_COLORS[i + 1],
+        faction: 'humans',
+        ready: true,
+      });
+    }
+
+    const modeName = maxPlayers === 4 ? 'FFA' : '1v1';
     const room: Room = {
       id: uuid(),
-      name: `${playerName}'s Single Player Game`,
+      name: `${playerName}'s ${modeName} Game`,
       hostId: playerId,
-      players: [humanPlayer, botPlayer],
-      maxPlayers: 2,
+      players: [humanPlayer, ...bots],
+      maxPlayers,
       status: 'waiting',
     };
 

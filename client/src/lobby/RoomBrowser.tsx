@@ -17,6 +17,7 @@ const RoomBrowser: React.FC<RoomBrowserProps> = ({ playerName, onBack }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [creating, setCreating] = useState(false);
   const [roomName, setRoomName] = useState('');
+  const [maxPlayers, setMaxPlayers] = useState<2 | 4>(2);
 
   useEffect(() => {
     const onRoomList = (list: Room[]) => setRooms(list);
@@ -34,9 +35,10 @@ const RoomBrowser: React.FC<RoomBrowserProps> = ({ playerName, onBack }) => {
 
   const handleCreate = () => {
     const name = roomName.trim() || `${playerName}'s Room`;
-    socket.emit('createRoom', { playerName, roomName: name });
+    socket.emit('createRoom', { playerName, roomName: name, maxPlayers });
     setCreating(false);
     setRoomName('');
+    setMaxPlayers(2);
   };
 
   const handleJoin = (roomId: string) => {
@@ -68,6 +70,22 @@ const RoomBrowser: React.FC<RoomBrowserProps> = ({ playerName, onBack }) => {
             maxLength={30}
             autoFocus
           />
+          <div style={styles.modeToggle}>
+            <button
+              onClick={() => setMaxPlayers(2)}
+              style={{
+                ...styles.modeButton,
+                ...(maxPlayers === 2 ? styles.modeButtonActive : {}),
+              }}
+            >1v1</button>
+            <button
+              onClick={() => setMaxPlayers(4)}
+              style={{
+                ...styles.modeButton,
+                ...(maxPlayers === 4 ? styles.modeButtonActive : {}),
+              }}
+            >FFA (4)</button>
+          </div>
           <button onClick={handleCreate} style={styles.confirmButton}>Create</button>
           <button onClick={() => setCreating(false)} style={styles.cancelButton}>Cancel</button>
         </div>
@@ -137,6 +155,17 @@ const styles: Record<string, React.CSSProperties> = {
   cancelButton: {
     padding: '10px 20px', borderRadius: 8, border: 'none',
     background: 'rgba(255,255,255,0.1)', color: '#ccc', cursor: 'pointer',
+  },
+  modeToggle: {
+    display: 'flex', gap: 4, background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 3,
+  },
+  modeButton: {
+    padding: '8px 14px', borderRadius: 6, border: 'none',
+    background: 'transparent', color: '#888', fontSize: 13, fontWeight: 700,
+    cursor: 'pointer', transition: 'all 0.15s',
+  },
+  modeButtonActive: {
+    background: 'rgba(233,69,96,0.8)', color: '#fff',
   },
   roomList: {
     flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8,

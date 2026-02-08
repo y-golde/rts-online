@@ -164,8 +164,8 @@ export interface Room {
 
 /** Client → Server lobby events. */
 export interface ClientLobbyEvents {
-  createRoom: (data: { playerName: string; roomName: string }) => void;
-  createSinglePlayerGame: (data: { playerName: string }) => void;
+  createRoom: (data: { playerName: string; roomName: string; maxPlayers?: number }) => void;
+  createSinglePlayerGame: (data: { playerName: string; maxPlayers?: number }) => void;
   joinRoom: (data: { roomId: string; playerName: string }) => void;
   leaveRoom: () => void;
   playerReady: (data: { ready: boolean }) => void;

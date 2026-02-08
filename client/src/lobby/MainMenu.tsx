@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 
 interface MainMenuProps {
-  onPlay: (name: string, mode: 'singleplayer' | 'multiplayer') => void;
+  onPlay: (name: string, mode: 'singleplayer' | 'singleplayer-ffa' | 'multiplayer') => void;
 }
 
 const MainMenu: React.FC<MainMenuProps> = ({ onPlay }) => {
@@ -53,7 +53,7 @@ const MainMenu: React.FC<MainMenuProps> = ({ onPlay }) => {
     return '';
   };
 
-  const handlePlay = (mode: 'singleplayer' | 'multiplayer') => {
+  const handlePlay = (mode: 'singleplayer' | 'singleplayer-ffa' | 'multiplayer') => {
     try {
       const trimmed = name.trim();
       
@@ -120,7 +120,6 @@ const MainMenu: React.FC<MainMenuProps> = ({ onPlay }) => {
             type="button"
             onClick={(e) => {
               e.preventDefault();
-              console.log('Single Player button clicked');
               handlePlay('singleplayer');
             }}
             disabled={!!error}
@@ -130,7 +129,22 @@ const MainMenu: React.FC<MainMenuProps> = ({ onPlay }) => {
               ...(error ? styles.buttonDisabled : {}),
             }}
           >
-            Single Player
+            1v1 vs Bot
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              handlePlay('singleplayer-ffa');
+            }}
+            disabled={!!error}
+            style={{
+              ...styles.button,
+              ...styles.buttonSecondary,
+              ...(error ? styles.buttonDisabled : {}),
+            }}
+          >
+            FFA vs 3 Bots
           </button>
           <button
             type="button"
