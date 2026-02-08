@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+shared/dist/
+server/dist/
+client/dist/
+
+# TypeScript incremental
+*.tsbuildinfo
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test artifacts
+coverage/
+
+# Vercel
+.vercel/
+
+# Misc
+test-fix.html

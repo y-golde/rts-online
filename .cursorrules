@@ -1,0 +1,95 @@
+# RTS Online - Cursor Rules
+
+## Project Overview
+A web-based multiplayer RTS game (think Warcraft 3 / Age of Mythology lite).
+- **Server-authoritative** architecture: all game logic runs on the server at 20 ticks/sec.
+- **Client** renders at 60fps with interpolation between server snapshots.
+- Client sends **commands** (move, build, attack, train); server validates everything.
+
+## Package Layout (pnpm monorepo)
+- `shared/` — TypeScript types, constants, and pure logic shared by client + server.
+  - `types.ts` — Core interfaces: `GameState`, `Entity`, `Player`, `GoldMine`, etc.
+  - `constants.ts` — All game balance numbers, tick rate, unit stats, costs. **No magic numbers elsewhere.**
+  - `pathfinding.ts` — A* algorithm (used server-side).
+- `server/` — Node.js + Express + Socket.io backend.
+  - `index.ts` — HTTP + WebSocket server entry point.
+  - `db.ts` — SQLite (better-sqlite3) setup and queries.
+  - `lobby.ts` — Room creation, joining, ready state, start game.
+  - `game/GameEngine.ts` — Main game loop; orchestrates systems each tick.
+  - `game/systems/movement.ts` — Unit movement + pathfinding.
+  - `game/systems/combat.ts` — Attack resolution, damage, death.
+  - `game/systems/economy.ts` — Gathering, building construction, unit training.
+  - `game/mapGenerator.ts` — Procedural tile map + gold mine placement.
+- `client/` — Vite + React (lobby only) + raw Canvas2D (game).
+  - `lobby/` — React components: MainMenu, RoomBrowser, RoomView.
+  - `game/` — Pure TypeScript Canvas2D engine (no React here for performance).
+    - `GameManager.ts` — Orchestrates canvas, input, renderer, socket.
+    - `Renderer.ts` — Canvas2D drawing (terrain, units, buildings, HUD).
+    - `Camera.ts` — Pan (WASD / edge scroll) and zoom (scroll wheel).
+    - `InputHandler.ts` — Mouse/keyboard → game commands.
+    - `HUD.ts` — Resource bar, minimap, selected-unit panel.
+    - `Interpolator.ts` — Smooths entity positions between server ticks.
+  - `socket.ts` — Socket.io client wrapper with typed events.
+
+## Naming Conventions
+- **PascalCase** for classes, React components, interfaces, type aliases.
+- **camelCase** for functions, variables, object keys.
+- **UPPER_SNAKE_CASE** for constants (`TICK_RATE`, `WORKER_COST`, etc.).
+- File names match their default export: `GameEngine.ts` → `class GameEngine`.
+
+## Key Types (source of truth: `shared/src/types.ts`)
+- `GameState` — Full snapshot of a running game (tick, map, players, entities, gold mines).
+- `Entity` — Any unit or building (has `type: EntityType`, position, HP, state, path, etc.).
+- `Player` — Player data (gold, supply, maxSupply, color, faction).
+- `EntityType` — `'homeBase' | 'worker' | 'house' | 'barracks' | 'resourceDepot' | 'infantry'`
+- `EntityState` — `'idle' | 'moving' | 'gathering' | 'building' | 'attacking' | 'training' | 'returning'`
+
+## Socket Events (see `shared/src/types.ts` for payload types)
+### Lobby
+- `createRoom`, `joinRoom`, `leaveRoom`, `roomList`, `roomUpdate`, `playerReady`, `startGame`
+### Game (client → server commands)
+- `moveUnits`, `attackTarget`, `buildStructure`, `trainUnit`, `gatherResource`
+### Game (server → client)
+- `gameState` (every tick), `gameStart`, `gameOver`
+
+## Game Systems Pattern
+All server game systems follow the same signature:
+```typescript
+export function processSystemName(state: GameState, dt: number): void
+```
+They mutate `state` in place. Execution order each tick:
+1. `processEconomy` (gathering, building, training)
+2. `processMovement` (pathfinding, position updates)
+3. `processCombat` (attacks, damage, death)
+
+## Checklists
+
+### Adding a New Unit Type
+1. Add to `EntityType` union in `shared/src/types.ts`.
+2. Add stats (hp, cost, speed, supply, etc.) to `shared/src/constants.ts`.
+3. Add rendering logic in `client/src/game/Renderer.ts`.
+4. Add server logic in the relevant `server/src/game/systems/` file(s).
+5. Add training/build option in the appropriate building's UI logic.
+
+### Adding a New Building Type
+1. Add to `EntityType` union in `shared/src/types.ts`.
+2. Add stats (hp, cost, size, build time) to `shared/src/constants.ts`.
+3. Add rendering logic in `client/src/game/Renderer.ts`.
+4. Add placement validation in `server/src/game/systems/economy.ts`.
+5. If it trains units, add training logic to `economy.ts`.
+6. Add build option to worker's action panel in client HUD.
+
+## Running the Project
+```bash
+pnpm install          # Install all dependencies
+pnpm dev              # Starts both client (Vite) and server (tsx watch) concurrently
+pnpm --filter client dev   # Client only
+pnpm --filter server dev   # Server only
+```
+
+## Code Style
+- Every file starts with a JSDoc `@file` + `@description` header.
+- Every exported function/class has a JSDoc comment.
+- No magic numbers — use constants from `shared/src/constants.ts`.
+- One concern per file, aim for <300 lines per file.
+- Use barrel exports (`index.ts`) in each package for clean imports.
