@@ -47,17 +47,18 @@ async function getDbAdapter(): Promise<DatabaseAdapter> {
 
 // Initialize on module load (catch errors to prevent server crash)
 const adapterPromise = getDbAdapter().catch((err) => {
-  console.error('[DB] Failed to initialize database adapter:', err);
-  throw err; // Re-throw so callers know it failed
+  console.error('[DB] Failed to initialize database adapter:', err.message ?? err);
+  console.warn('[DB] Server will continue without database — game is fully in-memory.');
+  return null; // DB is optional; game works without it
 });
 
 export async function ensurePlayer(id: string, name: string) {
   try {
     const adapter = await adapterPromise;
+    if (!adapter) return { id, name, wins: 0, losses: 0 };
     return adapter.ensurePlayer(id, name);
   } catch (err) {
-    console.error('[DB] ensurePlayer failed:', err);
-    // Return a mock player object so the game can continue without DB
+    console.error('[DB] ensurePlayer failed:', (err as Error).message);
     return { id, name, wins: 0, losses: 0 };
   }
 }
@@ -70,10 +71,10 @@ export async function recordMatch(
 ) {
   try {
     const adapter = await adapterPromise;
+    if (!adapter) return;
     return adapter.recordMatch(matchId, winnerId, durationSecs, players);
   } catch (err) {
-    console.error('[DB] recordMatch failed (match not saved):', err);
-    // Silently fail - game can continue without saving to DB
+    console.error('[DB] recordMatch failed (match not saved):', (err as Error).message);
   }
 }
 
