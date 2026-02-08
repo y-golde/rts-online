@@ -1,13 +1,3 @@
-# Build dependencies for better-sqlite3 native module + pnpm
+# Native build dependencies for better-sqlite3
 [phases.setup]
-nixPkgs = ["python3", "gcc", "gnumake", "nodejs_20"]
-cmds = ["npm i -g pnpm@10"]
-
-[phases.install]
-cmds = ["pnpm install --frozen-lockfile"]
-
-[phases.build]
-cmds = ["pnpm --filter shared build && pnpm --filter client build && pnpm --filter server build"]
-
-[start]
-cmd = "cd server && NODE_ENV=production node dist/index.js"
+nixPkgs = ["python3", "gcc", "gnumake"]

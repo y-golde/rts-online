@@ -7,7 +7,8 @@
   },
   "scripts": {
     "dev": "concurrently \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
-    "build": "pnpm --filter shared build && pnpm --filter server build && pnpm --filter client build",
+    "build": "pnpm --filter shared build && pnpm --filter client build && pnpm --filter server build",
+    "start": "cd server && NODE_ENV=production node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },
